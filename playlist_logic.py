@@ -12,48 +12,54 @@ DEFAULT_PROFILE = {
 }
 
 
+def _normalize_string(value: str, lowercase: bool = False) -> str:
+    """Helper to normalize string values."""
+    if not isinstance(value, str):
+        return ""
+    value = value.strip()
+    return value.lower() if lowercase else value
+
+
 def normalize_title(title: str) -> str:
     """Normalize a song title for comparisons."""
-    if not isinstance(title, str):
-        return ""
-    return title.strip()
+    return _normalize_string(title, lowercase=False)
 
 
 def normalize_artist(artist: str) -> str:
     """Normalize an artist name for comparisons."""
-    if not artist:
-        return ""
-    return artist.strip().lower()
+    return _normalize_string(artist, lowercase=True)
 
 
 def normalize_genre(genre: str) -> str:
     """Normalize a genre name for comparisons."""
-    return genre.lower().strip()
+    return _normalize_string(genre, lowercase=True)
+
+
+def _normalize_energy(energy: object) -> int:
+    """Helper to normalize energy to an integer."""
+    if isinstance(energy, str):
+        try:
+            return int(energy)
+        except ValueError:
+            return 0
+    return int(energy) if isinstance(energy, (int, float)) else 0
+
+
+def _normalize_tags(tags: object) -> List[str]:
+    """Helper to normalize tags to a list."""
+    if isinstance(tags, str):
+        return [tags]
+    return tags if isinstance(tags, list) else []
 
 
 def normalize_song(raw: Song) -> Song:
     """Return a normalized song dict with expected keys."""
-    title = normalize_title(str(raw.get("title", "")))
-    artist = normalize_artist(str(raw.get("artist", "")))
-    genre = normalize_genre(str(raw.get("genre", "")))
-    energy = raw.get("energy", 0)
-
-    if isinstance(energy, str):
-        try:
-            energy = int(energy)
-        except ValueError:
-            energy = 0
-
-    tags = raw.get("tags", [])
-    if isinstance(tags, str):
-        tags = [tags]
-
     return {
-        "title": title,
-        "artist": artist,
-        "genre": genre,
-        "energy": energy,
-        "tags": tags,
+        "title": normalize_title(str(raw.get("title", ""))),
+        "artist": normalize_artist(str(raw.get("artist", ""))),
+        "genre": normalize_genre(str(raw.get("genre", ""))),
+        "energy": _normalize_energy(raw.get("energy", 0)),
+        "tags": _normalize_tags(raw.get("tags", [])),
     }
 
 
